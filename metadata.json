@@ -1,0 +1,6 @@
+{
+  "name": "EduManage",
+  "description": "School Management System with role-based access control, built with React, TailwindCSS, and Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
