@@ -21,6 +21,10 @@ import Attendance from './features/attendance/Attendance';
 import Results from './features/results/Results';
 import FeePayments from './features/fees/FeePayments';
 import Notices from './features/notices/Notices';
+import Phases from './features/phases/Phases';
+import Profile from './features/profile/Profile';
+import Settings from './features/settings/Settings';
+import Help from './features/help/Help';
 
 export default function App() {
   return (
@@ -39,11 +43,15 @@ export default function App() {
                 <Route path="/teachers" element={<Teachers />} />
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
+                <Route path="/phases" element={<Phases />} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/exams" element={<Exams />} />
                 <Route path="/results" element={<Results />} />
                 <Route path="/fees" element={<FeePayments />} />
                 <Route path="/notices" element={<Notices />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/help" element={<Help />} />
               </Route>
             </Route>
             

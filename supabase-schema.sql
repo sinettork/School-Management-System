@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 --------------------------------------------------
 -- profiles
 --------------------------------------------------
-create table profiles (
+create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
   email text unique,
@@ -19,7 +19,7 @@ create table profiles (
 --------------------------------------------------
 -- classes
 --------------------------------------------------
-create table classes (
+create table if not exists classes (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   numeric_level int,
@@ -29,7 +29,7 @@ create table classes (
 --------------------------------------------------
 -- sections
 --------------------------------------------------
-create table sections (
+create table if not exists sections (
   id uuid primary key default gen_random_uuid(),
   class_id uuid references classes(id) on delete cascade,
   name text not null
@@ -38,7 +38,7 @@ create table sections (
 --------------------------------------------------
 -- students
 --------------------------------------------------
-create table students (
+create table if not exists students (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid references profiles(id),
   student_code text unique,
@@ -56,7 +56,7 @@ create table students (
 --------------------------------------------------
 -- teachers
 --------------------------------------------------
-create table teachers (
+create table if not exists teachers (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid references profiles(id),
   employee_code text unique,
@@ -68,7 +68,7 @@ create table teachers (
 --------------------------------------------------
 -- subjects
 --------------------------------------------------
-create table subjects (
+create table if not exists subjects (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   code text unique,
@@ -78,7 +78,7 @@ create table subjects (
 --------------------------------------------------
 -- attendance
 --------------------------------------------------
-create table attendance (
+create table if not exists attendance (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id),
   class_id uuid references classes(id),
@@ -89,10 +89,20 @@ create table attendance (
   marked_by uuid references profiles(id)
 );
 
+-- Safely add unique constraint to attendance
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'attendance_student_date_key'
+  ) then
+    alter table attendance add constraint attendance_student_date_key unique (student_id, attendance_date);
+  end if;
+end $$;
+
 --------------------------------------------------
 -- exams
 --------------------------------------------------
-create table exams (
+create table if not exists exams (
   id uuid primary key default gen_random_uuid(),
   name text,
   class_id uuid references classes(id),
@@ -103,7 +113,7 @@ create table exams (
 --------------------------------------------------
 -- exam_results
 --------------------------------------------------
-create table exam_results (
+create table if not exists exam_results (
   id uuid primary key default gen_random_uuid(),
   exam_id uuid references exams(id),
   student_id uuid references students(id),
@@ -117,7 +127,7 @@ create table exam_results (
 --------------------------------------------------
 -- fee_payments
 --------------------------------------------------
-create table fee_payments (
+create table if not exists fee_payments (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id),
   amount numeric,
@@ -129,7 +139,7 @@ create table fee_payments (
 --------------------------------------------------
 -- notices
 --------------------------------------------------
-create table notices (
+create table if not exists notices (
   id uuid primary key default gen_random_uuid(),
   title text,
   description text,
@@ -141,22 +151,66 @@ create table notices (
 -- ENABLE RLS
 --------------------------------------------------
 alter table profiles enable row level security;
+alter table classes enable row level security;
+alter table sections enable row level security;
 alter table students enable row level security;
 alter table teachers enable row level security;
+alter table subjects enable row level security;
 alter table attendance enable row level security;
 alter table exams enable row level security;
 alter table exam_results enable row level security;
+alter table fee_payments enable row level security;
+alter table notices enable row level security;
 
 --------------------------------------------------
--- ADMIN POLICY Example
+-- RLS POLICIES (Allow authenticated users full access for now)
 --------------------------------------------------
-create policy "Admin full access"
-on students
-for all
-using (
-  exists (
-    select 1 from profiles
-    where profiles.id = auth.uid()
-    and profiles.role = 'admin'
-  )
-);
+-- We drop policies first so the script can be run multiple times safely
+drop policy if exists "Admin full access profiles" on profiles;
+drop policy if exists "Admin full access classes" on classes;
+drop policy if exists "Admin full access sections" on sections;
+drop policy if exists "Admin full access students" on students;
+drop policy if exists "Admin full access teachers" on teachers;
+drop policy if exists "Admin full access subjects" on subjects;
+drop policy if exists "Admin full access attendance" on attendance;
+drop policy if exists "Admin full access exams" on exams;
+drop policy if exists "Admin full access exam_results" on exam_results;
+drop policy if exists "Admin full access fee_payments" on fee_payments;
+drop policy if exists "Admin full access notices" on notices;
+drop policy if exists "Admin full access" on students;
+
+drop policy if exists "Auth full access profiles" on profiles;
+drop policy if exists "Auth full access classes" on classes;
+drop policy if exists "Auth full access sections" on sections;
+drop policy if exists "Auth full access students" on students;
+drop policy if exists "Auth full access teachers" on teachers;
+drop policy if exists "Auth full access subjects" on subjects;
+drop policy if exists "Auth full access attendance" on attendance;
+drop policy if exists "Auth full access exams" on exams;
+drop policy if exists "Auth full access exam_results" on exam_results;
+drop policy if exists "Auth full access fee_payments" on fee_payments;
+drop policy if exists "Auth full access notices" on notices;
+
+create policy "Auth full access profiles" on profiles for all to authenticated using (true) with check (true);
+create policy "Auth full access classes" on classes for all to authenticated using (true) with check (true);
+create policy "Auth full access sections" on sections for all to authenticated using (true) with check (true);
+create policy "Auth full access students" on students for all to authenticated using (true) with check (true);
+create policy "Auth full access teachers" on teachers for all to authenticated using (true) with check (true);
+create policy "Auth full access subjects" on subjects for all to authenticated using (true) with check (true);
+create policy "Auth full access attendance" on attendance for all to authenticated using (true) with check (true);
+create policy "Auth full access exams" on exams for all to authenticated using (true) with check (true);
+create policy "Auth full access exam_results" on exam_results for all to authenticated using (true) with check (true);
+create policy "Auth full access fee_payments" on fee_payments for all to authenticated using (true) with check (true);
+create policy "Auth full access notices" on notices for all to authenticated using (true) with check (true);
+
+--------------------------------------------------
+-- INDEXES
+--------------------------------------------------
+create index if not exists idx_students_class on students(class_id);
+create index if not exists idx_students_profile on students(profile_id);
+create index if not exists idx_teachers_profile on teachers(profile_id);
+create index if not exists idx_attendance_student_date on attendance(student_id, attendance_date);
+create index if not exists idx_attendance_class on attendance(class_id);
+create index if not exists idx_exam_results_student on exam_results(student_id);
+create index if not exists idx_exam_results_exam on exam_results(exam_id);
+create index if not exists idx_fee_payments_student on fee_payments(student_id);

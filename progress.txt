@@ -81,18 +81,19 @@ PHASED UPDATES PLAN
 [✓] Dashboard: replace mock financial chart with real fee payment data
 [✓] Dashboard: show real notices from notices table
 
+
 --- PHASE 4: UX & Performance (2 sessions) ---
 [✓] Add pagination to main record tables
-[ ] Add CSV export for tables
+[✓] Add CSV export for tables
 [✓] Add empty state illustrations/icons
 [✓] Add React Error Boundary
 [✓] Add confirm dialogs for destructive actions
 
 --- PHASE 5: Security & Backend (1 session) ---
-[ ] Add RLS policies for all remaining tables
-[ ] Add unique constraint on attendance(student_id, attendance_date)
-[ ] Add database indexes for frequently queried columns
-[ ] Verify schema matches database.types.ts
+[✓] Add RLS policies for all remaining tables
+[✓] Add unique constraint on attendance(student_id, attendance_date)
+[✓] Add database indexes for frequently queried columns
+[✓] Verify schema matches database.types.ts
 
 COMPLETED IN THIS SESSION
 --------------------------
@@ -100,16 +101,13 @@ COMPLETED IN THIS SESSION
 [✓] Logo: KIRI.svg integrated in login, sidebar, favicon
 [✓] Rebrand: all "EduManage" references changed to "KIRI School"
 [✓] Supabase config: removed placeholder fallback, added isSupabaseConfigured guard
-[✓] Login: early guard toast when Supabase is not configured
-[✓] Dialog forms: fixed max-h scrollable, standardized max-w-md width
-[✓] Form typing: cleaned up useForm<any> and @ts-ignore in Students, Classes
-[✓] Exams, Attendance, Results modules fully implemented
-[✓] App.tsx: wired real components, removed Placeholder routes
-[✓] Supabase types: added relationships plus fee_payments/notices table types
-[✓] TypeScript: removed remaining `any` usage from feature/pages code and fixed build errors
-[✓] Phase 2: confirmed edit/delete for Students, Teachers, Classes, Subjects, Exams, Results
-[✓] Phase 3: added Fee Payments and Notices routes/sidebar entries
 [✓] Dashboard: replaced mock financial data and mock notices with live Supabase queries
 [✓] Phase 4: added shared EmptyState, TablePagination, ConfirmDialog, and ErrorBoundary components
 [✓] Phase 4: added pagination and action-focused empty states to Students, Teachers, Classes, Subjects, Exams, Results, Fee Payments, and Notices
 [✓] Phase 4: replaced repeated delete modals with a shared confirm dialog
+[✓] Phase 4: added CSV export functionality for all main data tables
+[✓] Phase 5: updated supabase-schema.sql with RLS policies, indexes, and unique constraints
+[✓] UX/UI: overhauled DashboardLayout to use a modern top-nav with a sleek user avatar dropdown
+[✓] UX/UI: moved Settings and Help & Support links to the bottom of the sidebar
+[✓] UX/UI: built a dedicated, premium Profile page with gradients, avatars, and card UI
+[✓] UX/UI: created dummy Settings and Help pages matching the design DNA

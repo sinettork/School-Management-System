@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -19,6 +20,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -81,14 +83,14 @@ export default function Login() {
         return;
       }
 
-      // 2. Insert into profiles with 'admin' as default (since you want to be admin initially)
+      // 2. Insert into profiles
       if (data.user) {
         const { error: profileError } = await supabase.from('profiles').insert([
           {
             id: data.user.id,
             email: data.user.email,
             full_name: fullName,
-            role: 'admin',
+            role: role,
           },
         ]);
 
@@ -97,7 +99,7 @@ export default function Login() {
           // Ignore error, might already exist if trigger is setup
         }
         
-        toast.success('Account created! You are logged in as Admin.');
+        toast.success(`Account created! You are logged in as a ${role}.`);
         navigate('/dashboard');
       }
     } catch (error: unknown) {
@@ -168,7 +170,7 @@ export default function Login() {
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="Super Admin"
+                    placeholder="John Doe"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -179,11 +181,24 @@ export default function Login() {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="admin@school.com"
+                    placeholder="student@school.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-role">Account Role</Label>
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger id="signup-role">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="admin">Administrator</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -199,14 +214,14 @@ export default function Login() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...</>
-                  ) : 'Create Admin Account'}
+                  ) : 'Create Account'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
         </CardContent>
         <CardFooter className="flex flex-col border-t p-4 text-center text-sm text-muted-foreground mt-4">
-          <p>This is a demonstration system. Creating an account defaults to admin role to let you test features.</p>
+          <p>This is a demonstration system. You can choose your role during sign up to test different features.</p>
         </CardFooter>
       </Card>
     </div>

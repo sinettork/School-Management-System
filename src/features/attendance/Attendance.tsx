@@ -5,11 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { usePaginatedRows } from '@/lib/usePaginatedRows';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TablePagination } from '@/components/shared/TablePagination';
 import { toast } from 'sonner';
 import { Save, CalendarDays, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { useAuth } from '@/app/providers/AuthProvider';
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | '';
@@ -115,6 +118,9 @@ export default function Attendance() {
 
   const isLoading = studentsLoading || attendanceLoading;
 
+  // Add pagination for students
+  const studentPagination = usePaginatedRows(students);
+
   return (
     <div className="space-y-6">
       <div>
@@ -146,11 +152,10 @@ export default function Attendance() {
             </div>
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              <Input
-                type="date"
+              <DatePicker
                 value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
+                onChange={(value) => {
+                  setSelectedDate(value);
                   setHasChanges(false);
                 }}
                 className="w-auto"
@@ -175,7 +180,7 @@ export default function Attendance() {
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : students && students.length > 0 ? (
+          ) : studentPagination.paginatedRows.length > 0 ? (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -186,7 +191,7 @@ export default function Attendance() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student) => {
+                  {studentPagination.paginatedRows.map((student) => {
                     const status = attendanceMap[student.id] || '';
                     return (
                       <TableRow key={student.id}>
@@ -198,7 +203,7 @@ export default function Attendance() {
                               type="button"
                               size="sm"
                               variant={status === 'present' ? 'default' : 'outline'}
-                              className={status === 'present' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+                              className={status === 'present' ? 'bg-[var(--color-present)] hover:bg-[var(--color-present)]/90 text-[var(--color-present-foreground)]' : ''}
                               onClick={() => handleStatusChange(student.id, 'present')}
                             >
                               Present
@@ -207,7 +212,7 @@ export default function Attendance() {
                               type="button"
                               size="sm"
                               variant={status === 'absent' ? 'default' : 'outline'}
-                              className={status === 'absent' ? 'bg-rose-600 hover:bg-rose-700' : ''}
+                              className={status === 'absent' ? 'bg-[var(--color-absent)] hover:bg-[var(--color-absent)]/90 text-[var(--color-absent-foreground)]' : ''}
                               onClick={() => handleStatusChange(student.id, 'absent')}
                             >
                               Absent
@@ -216,7 +221,7 @@ export default function Attendance() {
                               type="button"
                               size="sm"
                               variant={status === 'late' ? 'default' : 'outline'}
-                              className={status === 'late' ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                              className={status === 'late' ? 'bg-[var(--color-late)] hover:bg-[var(--color-late)]/90 text-[var(--color-late-foreground)]' : ''}
                               onClick={() => handleStatusChange(student.id, 'late')}
                             >
                               Late
@@ -228,6 +233,13 @@ export default function Attendance() {
                   })}
                 </TableBody>
               </Table>
+              <TablePagination
+                page={studentPagination.page}
+                totalPages={studentPagination.totalPages}
+                totalItems={studentPagination.totalItems}
+                pageSize={studentPagination.pageSize}
+                onPageChange={studentPagination.setPage}
+              />
             </div>
           ) : (
             <div className="h-24 flex items-center justify-center text-muted-foreground">
@@ -243,33 +255,33 @@ export default function Attendance() {
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Present</p>
-                <p className="text-2xl font-bold text-emerald-600">
+                <p className="text-2xl font-bold" style={{ color: 'var(--color-present)' }}>
                   {Object.values(attendanceMap).filter((s) => s === 'present').length}
                 </p>
               </div>
-              <Badge className="bg-emerald-600/10 text-emerald-700">P</Badge>
+              <Badge className="bg-[var(--color-present)]/10 text-[var(--color-present)]">P</Badge>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Absent</p>
-                <p className="text-2xl font-bold text-rose-600">
+                <p className="text-2xl font-bold" style={{ color: 'var(--color-absent)' }}>
                   {Object.values(attendanceMap).filter((s) => s === 'absent').length}
                 </p>
               </div>
-              <Badge className="bg-rose-600/10 text-rose-700">A</Badge>
+              <Badge className="bg-[var(--color-absent)]/10 text-[var(--color-absent)]">A</Badge>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Late</p>
-                <p className="text-2xl font-bold text-amber-600">
+                <p className="text-2xl font-bold" style={{ color: 'var(--color-late)' }}>
                   {Object.values(attendanceMap).filter((s) => s === 'late').length}
                 </p>
               </div>
-              <Badge className="bg-amber-600/10 text-amber-700">L</Badge>
+              <Badge className="bg-[var(--color-late)]/10 text-[var(--color-late)]">L</Badge>
             </CardContent>
           </Card>
         </div>
