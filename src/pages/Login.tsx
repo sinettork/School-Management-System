@@ -7,9 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { School, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/providers/AuthProvider';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -45,8 +49,8 @@ export default function Login() {
         toast.success('Logged in successfully');
         navigate('/dashboard');
       }
-    } catch (error: any) {
-      toast.error(error?.message || 'An error occurred during login');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'An error occurred during login'));
     } finally {
       setLoading(false);
     }
@@ -79,15 +83,14 @@ export default function Login() {
 
       // 2. Insert into profiles with 'admin' as default (since you want to be admin initially)
       if (data.user) {
-        const req: any = supabase.from('profiles').insert([
+        const { error: profileError } = await supabase.from('profiles').insert([
           {
             id: data.user.id,
             email: data.user.email,
             full_name: fullName,
             role: 'admin',
-          }
-        ] as any);
-        const { error: profileError } = await req;
+          },
+        ]);
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
@@ -97,8 +100,8 @@ export default function Login() {
         toast.success('Account created! You are logged in as Admin.');
         navigate('/dashboard');
       }
-    } catch (error: any) {
-      toast.error(error?.message || 'An error occurred during sign up');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'An error occurred during sign up'));
     } finally {
       setLoading(false);
     }
@@ -109,11 +112,9 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2 text-center">
           <div className="flex justify-center mb-2">
-            <div className="rounded-full bg-primary/10 p-3">
-              <School className="h-6 w-6 text-primary" />
-            </div>
+            <img src="/KIRI.svg" alt="KIRI School Logo" className="h-16 w-auto" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">EduManage System</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">KIRI School</CardTitle>
           <CardDescription>Enter your credentials to access the system</CardDescription>
         </CardHeader>
         <CardContent>

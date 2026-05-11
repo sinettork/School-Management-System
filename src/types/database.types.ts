@@ -49,6 +49,7 @@ export interface Database {
           avatar_url?: string | null
           created_at?: string | null
         }
+        Relationships: []
       }
       classes: {
         Row: {
@@ -69,6 +70,7 @@ export interface Database {
           numeric_level?: number | null
           created_at?: string | null
         }
+        Relationships: []
       }
       sections: {
         Row: {
@@ -86,6 +88,15 @@ export interface Database {
           class_id?: string | null
           name?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "sections_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {
@@ -130,6 +141,29 @@ export interface Database {
           admission_date?: string | null
           status?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "students_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teachers: {
         Row: {
@@ -156,6 +190,15 @@ export interface Database {
           joining_date?: string | null
           salary?: number | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subjects: {
         Row: {
@@ -176,6 +219,15 @@ export interface Database {
           code?: string | null
           class_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       attendance: {
         Row: {
@@ -202,6 +254,29 @@ export interface Database {
           status?: string | null
           marked_by?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_marked_by_fkey"
+            columns: ["marked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exams: {
         Row: {
@@ -225,6 +300,15 @@ export interface Database {
           start_date?: string | null
           end_date?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "exams_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exam_results: {
         Row: {
@@ -257,6 +341,88 @@ export interface Database {
           grade?: string | null
           remarks?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "exam_results_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_payments: {
+        Row: {
+          id: string
+          student_id: string | null
+          amount: number | null
+          payment_date: string | null
+          payment_method: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          id?: string
+          student_id?: string | null
+          amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          id?: string
+          student_id?: string | null
+          amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notices: {
+        Row: {
+          id: string
+          title: string | null
+          description: string | null
+          audience: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          title?: string | null
+          description?: string | null
+          audience?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string | null
+          description?: string | null
+          audience?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
       }
     }
   }

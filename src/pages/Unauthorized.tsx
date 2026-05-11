@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function Unauthorized() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center text-center px-4">
@@ -6,7 +8,7 @@ export default function Unauthorized() {
       <p className="text-muted-foreground max-w-md mb-8">
         You don't have permission to access this page. Please contact your administrator if you believe this is a mistake.
       </p>
-      <a href="/dashboard" className="text-primary hover:underline font-medium">Return to Dashboard</a>
+      <Link to="/dashboard" className="text-primary hover:underline font-medium">Return to Dashboard</Link>
     </div>
   );
 }

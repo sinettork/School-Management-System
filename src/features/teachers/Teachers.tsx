@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, GraduationCap } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,10 +10,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TablePagination } from '@/components/shared/TablePagination';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { usePaginatedRows } from '@/lib/usePaginatedRows';
 
 const teacherSchema = z.object({
   profile_id: z.string().min(1, 'Profile is required'),
@@ -22,10 +26,27 @@ const teacherSchema = z.object({
 });
 
 type TeacherFormValues = z.infer<typeof teacherSchema>;
+type TeacherRow = {
+  id: string;
+  profile_id: string | null;
+  employee_code: string | null;
+  qualification: string | null;
+  joining_date: string | null;
+  salary: number | null;
+  profile: {
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
+};
 
 export default function Teachers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherRow | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<TeacherFormValues>({
@@ -71,7 +92,7 @@ export default function Teachers() {
             employee_code: values.employee_code,
             qualification: values.qualification,
             joining_date: new Date().toISOString().split('T')[0]
-        }] as any)
+        }])
         .select()
         .single();
       
@@ -84,8 +105,48 @@ export default function Teachers() {
       setIsDialogOpen(false);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: { message?: string }) => {
       toast.error(error.message || 'Failed to add teacher');
+    }
+  });
+
+  const updateTeacherMut = useMutation({
+    mutationFn: async (values: TeacherFormValues & { id: string }) => {
+      const { id, ...updateData } = values;
+      const { data, error } = await supabase
+        .from('teachers')
+        .update({ ...updateData, joining_date: new Date().toISOString().split('T')[0] })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      toast.success('Teacher updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingTeacher(null);
+      form.reset();
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || 'Failed to update teacher');
+    }
+  });
+
+  const deleteTeacherMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('teachers').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      toast.success('Teacher deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || 'Failed to delete teacher');
     }
   });
 
@@ -93,10 +154,32 @@ export default function Teachers() {
     createTeacherMut.mutate(values);
   };
 
+  const onEditSubmit = (values: TeacherFormValues) => {
+    if (editingTeacher) {
+      updateTeacherMut.mutate({ ...values, id: editingTeacher.id });
+    }
+  };
+
+  const openEditDialog = (teacher: TeacherRow) => {
+    setEditingTeacher(teacher);
+    form.reset({
+      profile_id: teacher.profile_id || '',
+      employee_code: teacher.employee_code || '',
+      qualification: teacher.qualification || '',
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
   const filteredTeachers = teachers?.filter(teacher => 
     teacher.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     teacher.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const teacherPagination = usePaginatedRows(filteredTeachers);
 
   return (
     <div className="space-y-6">
@@ -183,6 +266,85 @@ export default function Teachers() {
             </Form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Teacher</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="profile_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teacher Profile</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a profile" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableProfiles?.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.full_name || p.email || 'Unnamed User'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="employee_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employee Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="TCH001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="qualification"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Qualification</FormLabel>
+                      <FormControl>
+                        <Input placeholder="M.Sc. Mathematics" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end pt-4">
+                  <Button type="button" variant="outline" className="mr-2" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateTeacherMut.isPending}>
+                    {updateTeacherMut.isPending ? 'Updating...' : 'Update Teacher'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        <ConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Delete Teacher"
+          description="Are you sure you want to delete this teacher? This action cannot be undone."
+          isPending={deleteTeacherMut.isPending}
+          onConfirm={() => deleteId && deleteTeacherMut.mutate(deleteId)}
+        />
       </div>
 
       <Card>
@@ -216,28 +378,56 @@ export default function Teachers() {
                     <TableHead>Email</TableHead>
                     <TableHead>Qualification</TableHead>
                     <TableHead>Joining Date</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTeachers && filteredTeachers.length > 0 ? (
-                    filteredTeachers.map((teacher) => (
+                  {teacherPagination.paginatedRows.length > 0 ? (
+                    teacherPagination.paginatedRows.map((teacher) => (
                       <TableRow key={teacher.id}>
                         <TableCell className="font-medium">{teacher.employee_code}</TableCell>
                         <TableCell>{teacher.profile?.full_name || 'N/A'}</TableCell>
                         <TableCell>{teacher.profile?.email || 'N/A'}</TableCell>
                         <TableCell>{teacher.qualification || 'N/A'}</TableCell>
                         <TableCell>{teacher.joining_date || 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(teacher)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDeleteDialog(teacher.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        No results.
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        <EmptyState
+                          icon={GraduationCap}
+                          title="No teachers found"
+                          description="Try a different search or add a new teacher profile."
+                          action={
+                            <Button type="button" size="sm" onClick={() => setIsDialogOpen(true)}>
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Teacher
+                            </Button>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+              <TablePagination
+                page={teacherPagination.page}
+                totalPages={teacherPagination.totalPages}
+                totalItems={teacherPagination.totalItems}
+                pageSize={teacherPagination.pageSize}
+                onPageChange={teacherPagination.setPage}
+              />
             </div>
           )}
         </CardContent>

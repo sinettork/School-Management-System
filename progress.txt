@@ -1,0 +1,115 @@
+KIRI School Management System — Audit & Updates Plan
+======================================================
+Last updated: 2026-05-11
+
+CURRENT STATE
+-------------
+[✓] Project scaffolded (Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui)
+[✓] Supabase integration with typed client
+[✓] Auth system (login, signup, logout, role-based routing)
+[✓] Theme customized (navy blue + gold to match KIRI logo)
+[✓] Logo integration (KIRI.svg across login, sidebar, favicon)
+[✓] Name rebranded to "KIRI School"
+
+FEATURES IMPLEMENTED
+--------------------
+[✓] Dashboard — stats cards + mock financial chart + notices
+[✓] Students — list, search, add (with profile/class selects)
+[✓] Teachers — list, search, add (with profile select)
+[✓] Classes — list, search, add
+[✓] Subjects — list, search, add (with class select)
+[✓] Attendance — class+date selector, inline present/absent/late toggles, summary cards
+[✓] Exams — list, search, add (with class, date range)
+[✓] Results — list, search, add (with auto-grade calculation)
+[✓] Fee Payments — list, search, add payment records
+[✓] Notices — list, search, add announcements
+[✓] Dashboard — live counts, fee collection chart, recent notices
+
+SCHEMA TABLES
+-------------
+[✓] profiles, classes, sections, students, teachers, subjects
+[✓] attendance, exams, exam_results
+[✓] fee_payments — table exists, UI added
+[✓] notices — table exists, UI added
+
+REMAINING ISSUES (AUDIT FINDINGS)
+---------------------------------
+1. CRUD depth
+   - Core academic modules now have edit/delete
+   - Fee Payments and Notices are list/add only
+   - No view/detail pages for any entity
+
+2. UI/UX gaps
+   - Attendance uses hardcoded Tailwind colors (emerald/rose/amber)
+     that don't match the navy/gold theme. Should use CSS variables.
+   - Attendance table does not yet have pagination.
+
+3. Database / Backend
+   - Only 1 RLS policy exists (students table admin policy)
+   - Missing RLS for: teachers, classes, subjects, attendance, exams, exam_results, fee_payments, notices
+   - Missing unique constraint on attendance (student_id + attendance_date)
+
+4. Architecture
+   - No data export (CSV/Excel) functionality
+
+5. Theme consistency
+   - Attendance summary cards use hardcoded emerald/rose/amber utility colors.
+   - Dashboard chart uses `var(--color-primary)`, but could use the gold accent for contrast
+
+PHASED UPDATES PLAN
+===================
+
+--- PHASE 1: Bug Fixes & Polish (1-2 sessions) ---
+[✓] Fix all `error: any` types across the codebase (9 occurrences in 8 files)
+[✓] Replace `<a>` with `<Link>` in Unauthorized.tsx
+[✓] Fix Attendance button colors to use theme variables (emerald/rose/amber, opacity-based badges)
+[✓] Remove unused Placeholder.tsx
+[✓] Add NotFound page for 404s instead of redirect
+[✓] Add loading skeletons for Attendance class dropdown
+
+--- PHASE 2: CRUD — Edit & Delete (2-3 sessions) ---
+[✓] Students — add Edit dialog + Delete with confirmation
+[✓] Teachers — add Edit dialog + Delete with confirmation
+[✓] Classes — add Edit dialog + Delete with confirmation
+[✓] Subjects — add Edit dialog + Delete with confirmation
+[✓] Exams — add Edit dialog + Delete with confirmation
+[✓] Results — add Edit dialog + Delete with confirmation
+
+--- PHASE 3: New Features from Schema (2 sessions) ---
+[✓] Fee Payments module (list, add payment records)
+[✓] Notices/Announcements module (list, add notices)
+[✓] Dashboard: replace mock financial chart with real fee payment data
+[✓] Dashboard: show real notices from notices table
+
+--- PHASE 4: UX & Performance (2 sessions) ---
+[✓] Add pagination to main record tables
+[ ] Add CSV export for tables
+[✓] Add empty state illustrations/icons
+[✓] Add React Error Boundary
+[✓] Add confirm dialogs for destructive actions
+
+--- PHASE 5: Security & Backend (1 session) ---
+[ ] Add RLS policies for all remaining tables
+[ ] Add unique constraint on attendance(student_id, attendance_date)
+[ ] Add database indexes for frequently queried columns
+[ ] Verify schema matches database.types.ts
+
+COMPLETED IN THIS SESSION
+--------------------------
+[✓] Theme: navy blue + gold palette applied to light/dark modes
+[✓] Logo: KIRI.svg integrated in login, sidebar, favicon
+[✓] Rebrand: all "EduManage" references changed to "KIRI School"
+[✓] Supabase config: removed placeholder fallback, added isSupabaseConfigured guard
+[✓] Login: early guard toast when Supabase is not configured
+[✓] Dialog forms: fixed max-h scrollable, standardized max-w-md width
+[✓] Form typing: cleaned up useForm<any> and @ts-ignore in Students, Classes
+[✓] Exams, Attendance, Results modules fully implemented
+[✓] App.tsx: wired real components, removed Placeholder routes
+[✓] Supabase types: added relationships plus fee_payments/notices table types
+[✓] TypeScript: removed remaining `any` usage from feature/pages code and fixed build errors
+[✓] Phase 2: confirmed edit/delete for Students, Teachers, Classes, Subjects, Exams, Results
+[✓] Phase 3: added Fee Payments and Notices routes/sidebar entries
+[✓] Dashboard: replaced mock financial data and mock notices with live Supabase queries
+[✓] Phase 4: added shared EmptyState, TablePagination, ConfirmDialog, and ErrorBoundary components
+[✓] Phase 4: added pagination and action-focused empty states to Students, Teachers, Classes, Subjects, Exams, Results, Fee Payments, and Notices
+[✓] Phase 4: replaced repeated delete modals with a shared confirm dialog

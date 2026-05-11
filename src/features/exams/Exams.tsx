@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Pencil, Trash2, Users } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, FileEdit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,106 +13,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { useForm, type Resolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { usePaginatedRows } from '@/lib/usePaginatedRows';
 
-const studentSchema = z.object({
-  profile_id: z.string().min(1, 'Profile is required'),
-  student_code: z.string().min(1, 'Student code is required'),
+const examSchema = z.object({
+  name: z.string().min(1, 'Exam name is required'),
   class_id: z.string().min(1, 'Class is required'),
-  gender: z.string().optional(),
-  parent_name: z.string().min(1, 'Parent name is required'),
-  status: z.string().default('active'),
+  start_date: z.string().min(1, 'Start date is required'),
+  end_date: z.string().min(1, 'End date is required'),
 });
 
-type StudentFormValues = z.infer<typeof studentSchema>;
-type StudentRow = {
+type ExamFormValues = z.infer<typeof examSchema>;
+type ExamRow = {
   id: string;
-  profile_id: string | null;
-  student_code: string | null;
+  name: string | null;
   class_id: string | null;
-  section_id: string | null;
-  gender: string | null;
-  parent_name: string | null;
-  status: string | null;
-  profile: {
-    full_name: string | null;
-    email: string | null;
-  } | null;
+  start_date: string | null;
+  end_date: string | null;
   class: {
-    name: string;
-  } | null;
-  section: {
     name: string;
   } | null;
 };
 
-export default function Students() {
+export default function Exams() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
+  const [editingExam, setEditingExam] = useState<ExamRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<StudentFormValues>({
-    resolver: zodResolver(studentSchema) as Resolver<StudentFormValues>,
+  const form = useForm<ExamFormValues>({
+    resolver: zodResolver(examSchema),
     defaultValues: {
-      profile_id: '',
-      student_code: '',
+      name: '',
       class_id: '',
-      gender: '',
-      parent_name: '',
-      status: 'active',
+      start_date: '',
+      end_date: '',
     },
   });
 
-  const { data: students, isLoading } = useQuery({
-    queryKey: ['students'],
-    queryFn: async () => {
-      let data: StudentRow[] | null = null;
-      try {
-        const result = await supabase
-          .from('students')
-          .select(`
-            *,
-            profile:profiles(full_name, email),
-            class:classes(name),
-            section:sections(name)
-          `)
-          .order('created_at', { ascending: false, foreignTable: 'profiles' });
-        data = result.data;
-      } catch (e) {
-        // failed
-      }
-      
-      // If ordering by joined table fails (due to created_at absence or postgREST limitations), fetch unordered
-      if (!data) {
-        const fallback = await supabase
-          .from('students')
-          .select(`
-            *,
-            profile:profiles(full_name, email),
-            class:classes(name),
-            section:sections(name)
-          `);
-        return fallback.data || [];
-      }
-      return data || [];
-    }
-  });
-
-  const { data: availableProfiles } = useQuery({
-    queryKey: ['student-profiles'],
+  const { data: exams, isLoading } = useQuery({
+    queryKey: ['exams'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('role', 'student');
+        .from('exams')
+        .select(`
+          *,
+          class:classes(name)
+        `)
+        .order('start_date', { ascending: false });
       if (error) throw error;
       return data || [];
     }
@@ -128,33 +81,37 @@ export default function Students() {
     }
   });
 
-  const createStudentMut = useMutation({
-    mutationFn: async (values: StudentFormValues) => {
+  const createExamMut = useMutation({
+    mutationFn: async (values: ExamFormValues) => {
       const { data, error } = await supabase
-        .from('students')
-        .insert([values])
+        .from('exams')
+        .insert([{
+          name: values.name,
+          class_id: values.class_id,
+          start_date: values.start_date,
+          end_date: values.end_date,
+        }])
         .select()
         .single();
-      
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-      toast.success('Student added successfully');
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
+      toast.success('Exam created successfully');
       setIsDialogOpen(false);
       form.reset();
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Failed to add student');
+      toast.error(error.message || 'Failed to create exam');
     }
   });
 
-  const updateStudentMut = useMutation({
-    mutationFn: async (values: StudentFormValues & { id: string }) => {
+  const updateExamMut = useMutation({
+    mutationFn: async (values: ExamFormValues & { id: string }) => {
       const { id, ...updateData } = values;
       const { data, error } = await supabase
-        .from('students')
+        .from('exams')
         .update(updateData)
         .eq('id', id)
         .select()
@@ -163,52 +120,50 @@ export default function Students() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-      toast.success('Student updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
+      toast.success('Exam updated successfully');
       setIsEditDialogOpen(false);
-      setEditingStudent(null);
+      setEditingExam(null);
       form.reset();
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Failed to update student');
+      toast.error(error.message || 'Failed to update exam');
     }
   });
 
-  const deleteStudentMut = useMutation({
+  const deleteExamMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('students').delete().eq('id', id);
+      const { error } = await supabase.from('exams').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-      toast.success('Student deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['exams'] });
+      toast.success('Exam deleted successfully');
       setIsDeleteDialogOpen(false);
       setDeleteId(null);
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Failed to delete student');
+      toast.error(error.message || 'Failed to delete exam');
     }
   });
 
-  const onSubmit = (values: StudentFormValues) => {
-    createStudentMut.mutate(values);
+  const onSubmit = (values: ExamFormValues) => {
+    createExamMut.mutate(values);
   };
 
-  const onEditSubmit = (values: StudentFormValues) => {
-    if (editingStudent) {
-      updateStudentMut.mutate({ ...values, id: editingStudent.id });
+  const onEditSubmit = (values: ExamFormValues) => {
+    if (editingExam) {
+      updateExamMut.mutate({ ...values, id: editingExam.id });
     }
   };
 
-  const openEditDialog = (student: StudentRow) => {
-    setEditingStudent(student);
+  const openEditDialog = (exam: ExamRow) => {
+    setEditingExam(exam);
     form.reset({
-      profile_id: student.profile_id || '',
-      student_code: student.student_code || '',
-      class_id: student.class_id || '',
-      gender: student.gender || '',
-      parent_name: student.parent_name || '',
-      status: student.status || 'active',
+      name: exam.name || '',
+      class_id: exam.class_id || '',
+      start_date: exam.start_date || '',
+      end_date: exam.end_date || '',
     });
     setIsEditDialogOpen(true);
   };
@@ -218,63 +173,39 @@ export default function Students() {
     setIsDeleteDialogOpen(true);
   };
 
-  const filteredStudents = students?.filter(student => 
-    student.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.student_code?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredExams = exams?.filter(exam =>
+    exam.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.class?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const studentPagination = usePaginatedRows(filteredStudents);
+  const examPagination = usePaginatedRows(filteredExams);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Students</h1>
-          <p className="text-muted-foreground">Manage student records and enrollments.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Exams</h1>
+          <p className="text-muted-foreground">Manage examinations and schedules.</p>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger render={<Button />}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Student
+            <Plus className="mr-2 h-4 w-4" />
+            Add Exam
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Student</DialogTitle>
+              <DialogTitle>Add New Exam</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="profile_id"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Student Profile</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a profile" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableProfiles?.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.full_name || p.email || 'Unnamed User'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="student_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Student Code</FormLabel>
+                      <FormLabel>Exam Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="STU001" {...field} />
+                        <Input placeholder="e.g., Mid-Term Examination" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -306,12 +237,25 @@ export default function Students() {
                 />
                 <FormField
                   control={form.control}
-                  name="parent_name"
+                  name="start_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Parent Name</FormLabel>
+                      <FormLabel>Start Date</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe Sr." {...field} />
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -321,8 +265,8 @@ export default function Students() {
                   <Button type="button" variant="outline" className="mr-2" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={createStudentMut.isPending}>
-                    {createStudentMut.isPending ? 'Saving...' : 'Save Student'}
+                  <Button type="submit" disabled={createExamMut.isPending}>
+                    {createExamMut.isPending ? 'Saving...' : 'Save Exam'}
                   </Button>
                 </div>
               </form>
@@ -333,42 +277,18 @@ export default function Students() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Edit Student</DialogTitle>
+              <DialogTitle>Edit Exam</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="profile_id"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Student Profile</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a profile" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableProfiles?.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.full_name || p.email || 'Unnamed User'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="student_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Student Code</FormLabel>
+                      <FormLabel>Exam Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="STU001" {...field} />
+                        <Input placeholder="e.g., Mid-Term Examination" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -400,12 +320,25 @@ export default function Students() {
                 />
                 <FormField
                   control={form.control}
-                  name="parent_name"
+                  name="start_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Parent Name</FormLabel>
+                      <FormLabel>Start Date</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe Sr." {...field} />
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -415,8 +348,8 @@ export default function Students() {
                   <Button type="button" variant="outline" className="mr-2" onClick={() => setIsEditDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={updateStudentMut.isPending}>
-                    {updateStudentMut.isPending ? 'Updating...' : 'Update Student'}
+                  <Button type="submit" disabled={updateExamMut.isPending}>
+                    {updateExamMut.isPending ? 'Updating...' : 'Update Exam'}
                   </Button>
                 </div>
               </form>
@@ -427,10 +360,10 @@ export default function Students() {
         <ConfirmDialog
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
-          title="Delete Student"
-          description="Are you sure you want to delete this student? This action cannot be undone."
-          isPending={deleteStudentMut.isPending}
-          onConfirm={() => deleteId && deleteStudentMut.mutate(deleteId)}
+          title="Delete Exam"
+          description="Are you sure you want to delete this exam? This action cannot be undone."
+          isPending={deleteExamMut.isPending}
+          onConfirm={() => deleteId && deleteExamMut.mutate(deleteId)}
         />
       </div>
 
@@ -440,7 +373,7 @@ export default function Students() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search students..."
+                placeholder="Search exams..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -454,42 +387,33 @@ export default function Students() {
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
             </div>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Student Code</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Exam Name</TableHead>
                     <TableHead>Class</TableHead>
-                    <TableHead>Parent Name</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {studentPagination.paginatedRows.length > 0 ? (
-                    studentPagination.paginatedRows.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.student_code}</TableCell>
-                        <TableCell>{student.profile?.full_name || 'N/A'}</TableCell>
-                        <TableCell>
-                          {student.class?.name || 'N/A'} {student.section?.name ? `- ${student.section.name}` : ''}
-                        </TableCell>
-                        <TableCell>{student.parent_name || 'N/A'}</TableCell>
-                        <TableCell>
-                          <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
-                            {student.status}
-                          </Badge>
-                        </TableCell>
+                  {examPagination.paginatedRows.length > 0 ? (
+                    examPagination.paginatedRows.map((exam) => (
+                      <TableRow key={exam.id}>
+                        <TableCell className="font-medium">{exam.name}</TableCell>
+                        <TableCell>{exam.class?.name || 'N/A'}</TableCell>
+                        <TableCell>{exam.start_date || 'N/A'}</TableCell>
+                        <TableCell>{exam.end_date || 'N/A'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(student)}>
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(exam)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDeleteDialog(student.id)}>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDeleteDialog(exam.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -498,15 +422,15 @@ export default function Students() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center">
                         <EmptyState
-                          icon={Users}
-                          title="No students found"
-                          description="Try a different search or add a new student record."
+                          icon={FileEdit}
+                          title="No exams found"
+                          description="Try a different search or add a new exam schedule."
                           action={
                             <Button type="button" size="sm" onClick={() => setIsDialogOpen(true)}>
                               <Plus className="mr-2 h-4 w-4" />
-                              Add Student
+                              Add Exam
                             </Button>
                           }
                         />
@@ -516,11 +440,11 @@ export default function Students() {
                 </TableBody>
               </Table>
               <TablePagination
-                page={studentPagination.page}
-                totalPages={studentPagination.totalPages}
-                totalItems={studentPagination.totalItems}
-                pageSize={studentPagination.pageSize}
-                onPageChange={studentPagination.setPage}
+                page={examPagination.page}
+                totalPages={examPagination.totalPages}
+                totalItems={examPagination.totalItems}
+                pageSize={examPagination.pageSize}
+                onPageChange={examPagination.setPage}
               />
             </div>
           )}

@@ -7,12 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { TablePagination } from '@/components/shared/TablePagination';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePaginatedRows } from '@/lib/usePaginatedRows';
 
 const classSchema = z.object({
   name: z.string().min(1, 'Class name is required'),
@@ -20,14 +24,23 @@ const classSchema = z.object({
 });
 
 type ClassFormValues = z.infer<typeof classSchema>;
+type ClassRow = {
+  id: string;
+  name: string;
+  numeric_level: number | null;
+};
 
 export default function Classes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<ClassRow | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<any>({
-    resolver: zodResolver(classSchema) as any,
+  const form = useForm<ClassFormValues>({
+    resolver: zodResolver(classSchema) as Resolver<ClassFormValues>,
     defaultValues: {
       name: '',
       numeric_level: 1,
@@ -54,7 +67,7 @@ export default function Classes() {
         .insert([{
           name: values.name,
           numeric_level: values.numeric_level,
-        }] as any)
+        }])
         .select()
         .single();
       
@@ -67,8 +80,48 @@ export default function Classes() {
       setIsDialogOpen(false);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: { message?: string }) => {
       toast.error(error.message || 'Failed to create class');
+    }
+  });
+
+  const updateClassMut = useMutation({
+    mutationFn: async (values: ClassFormValues & { id: string }) => {
+      const { id, ...updateData } = values;
+      const { data, error } = await supabase
+        .from('classes')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      toast.success('Class updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingClass(null);
+      form.reset();
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || 'Failed to update class');
+    }
+  });
+
+  const deleteClassMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('classes').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      toast.success('Class deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || 'Failed to delete class');
     }
   });
 
@@ -76,9 +129,30 @@ export default function Classes() {
     createClassMut.mutate(values);
   };
 
+  const onEditSubmit = (values: ClassFormValues) => {
+    if (editingClass) {
+      updateClassMut.mutate({ ...values, id: editingClass.id });
+    }
+  };
+
+  const openEditDialog = (c: ClassRow) => {
+    setEditingClass(c);
+    form.reset({
+      name: c.name || '',
+      numeric_level: c.numeric_level || 1,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
   const filteredClasses = classes?.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const classPagination = usePaginatedRows(filteredClasses);
 
   return (
     <div className="space-y-6">
@@ -93,13 +167,12 @@ export default function Classes() {
               <Plus className="mr-2 h-4 w-4" />
               Add Class
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Class</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {/* @ts-ignore */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -113,7 +186,6 @@ export default function Classes() {
                     </FormItem>
                   )}
                 />
-                {/* @ts-ignore */}
                 <FormField
                   control={form.control}
                   name="numeric_level"
@@ -139,6 +211,61 @@ export default function Classes() {
             </Form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Class</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Grade 10 A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="numeric_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Numeric Level</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 10" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end pt-4">
+                  <Button type="button" variant="outline" className="mr-2" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateClassMut.isPending}>
+                    {updateClassMut.isPending ? 'Updating...' : 'Update Class'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        <ConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Delete Class"
+          description="Are you sure you want to delete this class? This action cannot be undone."
+          isPending={deleteClassMut.isPending}
+          onConfirm={() => deleteId && deleteClassMut.mutate(deleteId)}
+        />
       </div>
 
       <Card>
@@ -173,25 +300,49 @@ export default function Classes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredClasses && filteredClasses.length > 0 ? (
-                    filteredClasses.map((c) => (
+                  {classPagination.paginatedRows.length > 0 ? (
+                    classPagination.paginatedRows.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium">{c.name}</TableCell>
                         <TableCell>{c.numeric_level || 'N/A'}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">Edit</Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(c)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDeleteDialog(c.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={3} className="h-24 text-center">
-                        No classes found.
+                        <EmptyState
+                          icon={BookOpen}
+                          title="No classes found"
+                          description="Try a different search or add a new class."
+                          action={
+                            <Button type="button" size="sm" onClick={() => setIsDialogOpen(true)}>
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Class
+                            </Button>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+              <TablePagination
+                page={classPagination.page}
+                totalPages={classPagination.totalPages}
+                totalItems={classPagination.totalItems}
+                pageSize={classPagination.pageSize}
+                onPageChange={classPagination.setPage}
+              />
             </div>
           )}
         </CardContent>
