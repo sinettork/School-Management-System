@@ -346,7 +346,7 @@ export default function Exams() {
                     <Button type="button" variant="outline" onClick={handleFormClose}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createExamMut.isPending || updateExamMut.isPending}>
+                    <Button type="submit" variant="warning" disabled={createExamMut.isPending || updateExamMut.isPending}>
                       {createExamMut.isPending || updateExamMut.isPending ? "Saving..." : (editingExam ? "Update Exam" : "Create Exam")}
                     </Button>
                   </div>
@@ -364,7 +364,7 @@ export default function Exams() {
               <p className="text-muted-foreground">Manage examination schedules and details.</p>
             </div>
 
-            <Button onClick={() => setShowForm(true)}>
+            <Button variant="warning" onClick={() => setShowForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Create Exam
             </Button>
@@ -415,16 +415,16 @@ export default function Exams() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => openEditDialog(exam)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => openDeleteDialog(exam.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -441,7 +441,7 @@ export default function Exams() {
                               title="No exams found"
                               description="Try a different search or create a new exam."
                               action={
-                                <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+                                <Button type="button" size="sm" variant="warning" onClick={() => setShowForm(true)}>
                                   <Plus className="mr-2 h-4 w-4" />
                                   Create Exam
                                 </Button>
@@ -472,9 +472,9 @@ export default function Exams() {
         title="Delete Exam"
         description="Are you sure you want to delete this exam? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => deleteId && deleteExamMut.mutate(deleteId)}
-        isDangerous
+        
       />
     </div>
   );

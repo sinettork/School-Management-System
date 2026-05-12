@@ -20,7 +20,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn('flex min-h-40 flex-col items-center justify-center px-4 py-8 text-center', className)}>
-      <div className="mb-4 rounded-full border bg-muted/40 p-3 text-muted-foreground">
+      <div className="icon-accent-muted mb-4">
         <Icon className="h-6 w-6" />
       </div>
       <h3 className="text-base font-semibold">{title}</h3>

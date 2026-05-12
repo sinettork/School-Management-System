@@ -291,7 +291,7 @@ export default function Notices() {
                           <TableRow key={notice.id}>
                             <TableCell>
                               <div className="flex items-start gap-3">
-                                <div className="mt-1 rounded-full bg-primary/10 p-2">
+                                <div className="icon-accent mt-1">
                                   <Bell className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
@@ -310,16 +310,16 @@ export default function Notices() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => handleEdit(notice)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => handleDelete(notice.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -367,9 +367,9 @@ export default function Notices() {
         title="Delete Notice"
         description="Are you sure you want to delete this notice? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => noticeToDelete && deleteNoticeMut.mutate(noticeToDelete)}
-        isDangerous
+        
       />
     </div>
   );

@@ -9,6 +9,8 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ProtectedRoute } from './app/router/ProtectedRoute';
 import { DashboardLayout } from './app/layouts/DashboardLayout';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 import Dashboard from './features/dashboard/Dashboard';
@@ -33,6 +35,8 @@ export default function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             
             <Route element={<ProtectedRoute />}>

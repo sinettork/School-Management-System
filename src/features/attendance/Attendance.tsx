@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { usePaginatedRows } from '@/lib/usePaginatedRows';
@@ -10,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { TablePagination } from '@/components/shared/TablePagination';
 import { toast } from 'sonner';
-import { Save, CalendarDays, Users } from 'lucide-react';
+import { Save, CalendarDays, Users, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -259,7 +258,7 @@ export default function Attendance() {
                   {Object.values(attendanceMap).filter((s) => s === 'present').length}
                 </p>
               </div>
-              <Badge className="bg-[var(--color-present)]/10 text-[var(--color-present)]">P</Badge>
+              <CheckCircle2 className="h-5 w-5" style={{ color: 'var(--color-present)' }} />
             </CardContent>
           </Card>
           <Card>
@@ -270,7 +269,7 @@ export default function Attendance() {
                   {Object.values(attendanceMap).filter((s) => s === 'absent').length}
                 </p>
               </div>
-              <Badge className="bg-[var(--color-absent)]/10 text-[var(--color-absent)]">A</Badge>
+              <XCircle className="h-5 w-5" style={{ color: 'var(--color-absent)' }} />
             </CardContent>
           </Card>
           <Card>
@@ -281,7 +280,7 @@ export default function Attendance() {
                   {Object.values(attendanceMap).filter((s) => s === 'late').length}
                 </p>
               </div>
-              <Badge className="bg-[var(--color-late)]/10 text-[var(--color-late)]">L</Badge>
+              <Clock3 className="h-5 w-5" style={{ color: 'var(--color-late)' }} />
             </CardContent>
           </Card>
         </div>

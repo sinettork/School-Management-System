@@ -388,7 +388,7 @@ export default function Students() {
                     <Button type="button" variant="outline" onClick={handleFormClose}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createStudentMut.isPending || updateStudentMut.isPending}>
+                    <Button type="submit" variant="success" disabled={createStudentMut.isPending || updateStudentMut.isPending}>
                       {createStudentMut.isPending || updateStudentMut.isPending ? "Saving..." : (editingStudent ? "Update Student" : "Add Student")}
                     </Button>
                   </div>
@@ -407,11 +407,11 @@ export default function Students() {
             </div>
             
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExportCSV}>
+              <Button variant="info" onClick={handleExportCSV}>
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
-              <Button onClick={() => setShowForm(true)}>
+              <Button variant="success" onClick={() => setShowForm(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Student
               </Button>
@@ -459,7 +459,7 @@ export default function Students() {
                             <TableCell>{student.student_code || "N/A"}</TableCell>
                             <TableCell>{student.class?.name || "N/A"}</TableCell>
                             <TableCell>
-                              <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                              <Badge variant={student.status === "active" ? "success" : "secondary"}>
                                 {student.status || "N/A"}
                               </Badge>
                             </TableCell>
@@ -467,16 +467,16 @@ export default function Students() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => openEditDialog(student)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => openDeleteDialog(student.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -493,7 +493,7 @@ export default function Students() {
                               title="No students found"
                               description="Try a different search or add a new student."
                               action={
-                                <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+                                <Button type="button" size="sm" variant="success" onClick={() => setShowForm(true)}>
                                   <Plus className="mr-2 h-4 w-4" />
                                   Add Student
                                 </Button>
@@ -524,9 +524,9 @@ export default function Students() {
         title="Delete Student"
         description="Are you sure you want to delete this student record? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => deleteId && deleteStudentMut.mutate(deleteId)}
-        isDangerous
+        
       />
     </div>
   );

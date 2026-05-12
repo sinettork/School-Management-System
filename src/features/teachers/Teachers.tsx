@@ -330,16 +330,16 @@ export default function Teachers() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => openEditDialog(teacher)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => openDeleteDialog(teacher.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -387,9 +387,9 @@ export default function Teachers() {
         title="Delete Teacher"
         description="Are you sure you want to delete this teacher record? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => deleteId && deleteTeacherMut.mutate(deleteId)}
-        isDangerous
+        
       />
     </div>
   );

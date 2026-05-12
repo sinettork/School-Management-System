@@ -74,6 +74,7 @@ export default function Login() {
         options: {
           data: {
             full_name: fullName,
+            role,
           }
         }
       });

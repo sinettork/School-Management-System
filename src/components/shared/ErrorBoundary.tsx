@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
           <Card className="w-full max-w-md">
             <CardContent className="flex flex-col items-center p-8 text-center">
-              <div className="mb-4 rounded-full bg-destructive/10 p-3 text-destructive">
+              <div className="icon-accent-destructive mb-4">
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <h1 className="text-xl font-semibold">Something went wrong</h1>

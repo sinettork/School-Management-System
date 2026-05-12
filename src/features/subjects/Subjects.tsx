@@ -224,7 +224,7 @@ export default function Subjects() {
                     <Button type="button" variant="outline" onClick={handleFormClose}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createSubjectMut.isPending || updateSubjectMut.isPending}>
+                    <Button type="submit" variant="success" disabled={createSubjectMut.isPending || updateSubjectMut.isPending}>
                       {createSubjectMut.isPending || updateSubjectMut.isPending ? "Saving..." : (editingSubject ? "Update Subject" : "Add Subject")}
                     </Button>
                   </div>
@@ -242,7 +242,7 @@ export default function Subjects() {
               <p className="text-muted-foreground">Manage curriculum subjects and courses.</p>
             </div>
 
-            <Button onClick={() => setShowForm(true)}>
+            <Button variant="success" onClick={() => setShowForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Subject
             </Button>
@@ -289,16 +289,16 @@ export default function Subjects() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => openEditDialog(subject)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => openDeleteDialog(subject.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -315,7 +315,7 @@ export default function Subjects() {
                               title="No subjects found"
                               description="Try a different search or create a new subject."
                               action={
-                                <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+                                <Button type="button" size="sm" variant="success" onClick={() => setShowForm(true)}>
                                   <Plus className="mr-2 h-4 w-4" />
                                   Add Subject
                                 </Button>
@@ -346,9 +346,9 @@ export default function Subjects() {
         title="Delete Subject"
         description="Are you sure you want to delete this subject? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => deleteId && deleteSubjectMut.mutate(deleteId)}
-        isDangerous
+        
       />
     </div>
   );

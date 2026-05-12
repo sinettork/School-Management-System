@@ -92,8 +92,8 @@ export function DashboardLayout() {
               key={route.path}
               to={route.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-muted/70 hover:text-foreground ${
-                  isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                `nav-link-clean ${
+                  isActive ? 'nav-link-clean-active' : ''
                 }`
               }
               onClick={() => setMobileMenuOpen(false)}
@@ -112,8 +112,8 @@ export function DashboardLayout() {
       <NavLink
         to="/settings"
         className={({ isActive }) =>
-          `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-muted/70 hover:text-foreground ${
-            isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+          `nav-link-clean ${
+            isActive ? 'nav-link-clean-active' : ''
           }`
         }
         onClick={() => setMobileMenuOpen(false)}
@@ -124,8 +124,8 @@ export function DashboardLayout() {
       <NavLink
         to="/help"
         className={({ isActive }) =>
-          `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-muted/70 hover:text-foreground ${
-            isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+          `nav-link-clean ${
+            isActive ? 'nav-link-clean-active' : ''
           }`
         }
         onClick={() => setMobileMenuOpen(false)}
@@ -141,7 +141,7 @@ export function DashboardLayout() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border/50 hover:bg-muted/50 transition-colors">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+            <AvatarFallback className="bg-transparent text-primary font-semibold text-sm">
               {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>

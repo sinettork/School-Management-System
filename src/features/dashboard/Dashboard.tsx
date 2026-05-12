@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Users, GraduationCap, DollarSign, BookOpen, Bell } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
@@ -90,7 +91,7 @@ export default function Dashboard() {
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
@@ -130,7 +131,7 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {notices.map((notice) => (
                   <div key={notice.id} className="flex items-start">
-                    <div className="bg-primary/10 p-2 rounded-full mr-4">
+                    <div className="icon-accent mr-4 mt-0.5">
                       <Bell className="h-4 w-4 text-primary" />
                     </div>
                     <div className="space-y-1">

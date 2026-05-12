@@ -31,7 +31,7 @@ export function ConfirmDialog({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-destructive/10 p-2 text-destructive">
+            <div className="icon-accent-destructive">
               <AlertTriangle className="h-4 w-4" />
             </div>
             <DialogTitle>{title}</DialogTitle>

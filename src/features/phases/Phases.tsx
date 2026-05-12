@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Plus, Search, Edit, Trash2, AcademicCap, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { CalendarDays, Plus, Search, Edit, Trash2, GraduationCap, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { usePaginatedRows } from "@/lib/usePaginatedRows";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { TablePagination } from "@/components/shared/TablePagination";
 import { EnhancedForm, FormSection, FormFieldGroup, FormHint } from "@/components/ui/enhanced-form";
@@ -376,7 +377,7 @@ export default function Phases() {
                 onChange={(event) => setAcademicYearFormValues((prev) => ({ ...prev, name: event.target.value }))}
                 placeholder="e.g., 2024-2025"
                 required
-                leftIcon={<AcademicCap className="h-4 w-4" />}
+                leftIcon={<GraduationCap className="h-4 w-4" />}
               />
             </FormFieldGroup>
             <FormFieldGroup columns={2}>
@@ -424,7 +425,7 @@ export default function Phases() {
                   label: year.name,
                 })) || []}
                 required
-                leftIcon={<AcademicCap className="h-4 w-4" />}
+                leftIcon={<GraduationCap className="h-4 w-4" />}
               />
               <EnhancedSelect
                 label="Phase Type"
@@ -486,11 +487,11 @@ export default function Phases() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Academic Phases</h1>
-              <p className="manage academic years, terms, semesters, and quarters.</p>
+              <p className="text-muted-foreground">Manage academic years, terms, semesters, and quarters.</p>
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setShowAcademicYearForm(true)}>
-                <AcademicCap className="mr-2 h-4 w-4" />
+                <GraduationCap className="mr-2 h-4 w-4" />
                 Add Academic Year
               </Button>
               <Button onClick={() => setShowPhaseForm(true)}>
@@ -530,16 +531,16 @@ export default function Phases() {
                         <div className="flex gap-2 mt-3">
                           <Button
                             type="button"
-                            variant="outline"
-                            size="sm"
+                            variant="action"
+                            size="icon-sm"
                             onClick={() => handleEditAcademicYear(year)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             type="button"
-                            variant="outline"
-                            size="sm"
+                            variant="action-destructive"
+                            size="icon-sm"
                             onClick={() => handleDelete("academic-year", year.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -592,7 +593,7 @@ export default function Phases() {
                           <TableRow key={phase.id}>
                             <TableCell>
                               <div className="flex items-start gap-3">
-                                <div className="mt-1 rounded-full bg-primary/10 p-2">
+                                <div className="icon-accent mt-1">
                                   <CalendarDays className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
@@ -617,16 +618,16 @@ export default function Phases() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => handleEditPhase(phase)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => handleDelete("phase", phase.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -674,7 +675,6 @@ export default function Phases() {
         title={`Delete ${itemToDelete?.type === "academic-year" ? "Academic Year" : "Phase"}`}
         description={`Are you sure you want to delete this ${itemToDelete?.type}? This action cannot be undone and may affect related data.`}
         confirmText="Delete"
-        cancelText="Cancel"
         onConfirm={() => {
           if (itemToDelete) {
             if (itemToDelete.type === "academic-year") {
@@ -684,7 +684,6 @@ export default function Phases() {
             }
           }
         }}
-        isDangerous
       />
     </div>
   );

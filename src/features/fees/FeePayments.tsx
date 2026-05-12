@@ -388,16 +388,16 @@ export default function FeePayments() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => handleEdit(payment)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => handleDelete(payment.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -445,9 +445,9 @@ export default function FeePayments() {
         title="Delete Payment"
         description="Are you sure you want to delete this payment record? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => paymentToDelete && deletePaymentMut.mutate(paymentToDelete)}
-        isDangerous
+        
       />
     </div>
   );

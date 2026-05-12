@@ -1,112 +1,125 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Mail, Shield, User, Clock, Activity, Settings } from 'lucide-react';
+import { Mail, Shield, User, Clock, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
 
-  return (
-    <div className="space-y-6 max-w-5xl mx-auto w-full pb-10">
-      <div className="flex items-center justify-between">
+  if (!profile) {
+    return (
+      <div className="mx-auto w-full max-w-3xl space-y-6 pb-10">
         <div>
-          <h3 className="text-2xl font-bold tracking-tight">Account Profile</h3>
+          <h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
+          <p className="text-muted-foreground">
+            Your account is signed in, but the profile record has not loaded yet.
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Unavailable</CardTitle>
+            <CardDescription>
+              Try refreshing the page. If this keeps happening, your `profiles` row may be missing in Supabase.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()}>Refresh Profile</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const initial = profile.full_name?.trim().charAt(0) || profile.email?.trim().charAt(0) || 'U';
+
+  return (
+    <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Account Profile</h1>
           <p className="text-muted-foreground">
             Manage your personal information and account settings.
           </p>
         </div>
-        <Button variant="outline" className="hidden sm:flex">
-          <Settings className="w-4 h-4 mr-2" />
+        <Button variant="outline" onClick={() => navigate('/settings')}>
+          <Settings className="mr-2 h-4 w-4" />
           Settings
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_300px]">
-        <div className="space-y-6">
-          <Card className="border-border/50 overflow-hidden relative">
-            <div className="h-32 bg-gradient-to-r from-primary/40 via-primary/20 to-background absolute inset-x-0 top-0"></div>
-            <CardContent className="pt-20 pb-8 px-6 sm:px-8 relative z-10">
-              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
-                <Avatar className="h-28 w-28 border-4 border-background">
-                  <AvatarFallback className="text-3xl bg-primary/10 text-primary font-bold">
-                    {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1.5 text-center sm:text-left mb-2">
-                  <h4 className="text-2xl font-bold tracking-tight">{profile?.full_name || 'User'}</h4>
-                  <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <Badge variant="secondary" className="capitalize text-primary bg-primary/10 hover:bg-primary/20 transition-colors">
-                      {profile?.role || 'Guest'}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground flex items-center">
-                      <Clock className="w-3.5 h-3.5 mr-1" /> Active now
-                    </span>
-                  </div>
-                </div>
+      <Card className="overflow-hidden">
+        <div className="h-28 bg-gradient-to-r from-primary/30 via-primary/10 to-background" />
+        <CardContent className="-mt-10 px-6 pb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <Avatar className="h-24 w-24 border-4 border-background bg-background">
+              <AvatarFallback className="bg-transparent text-2xl font-bold text-primary">
+                {initial.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold">{profile.full_name || 'User'}</h2>
+              <p className="text-sm capitalize text-muted-foreground">{profile.role} account</p>
+              <p className="flex items-center text-sm text-muted-foreground">
+                <Clock className="mr-1 h-3.5 w-3.5" />
+                Active now
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>Your basic profile details and contact information.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                Full Name
               </div>
-            </CardContent>
-          </Card>
+              <p className="font-medium">{profile.full_name || 'Not provided'}</p>
+            </div>
 
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Your basic profile details and contact information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid sm:grid-cols-2 gap-6">
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50 transition-colors hover:bg-muted/50">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <User className="h-4 w-4" />
-                    <span className="text-sm font-medium">Full Name</span>
-                  </div>
-                  <p className="font-medium">{profile?.full_name || 'Not provided'}</p>
-                </div>
-
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50 transition-colors hover:bg-muted/50">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Mail className="h-4 w-4" />
-                    <span className="text-sm font-medium">Email Address</span>
-                  </div>
-                  <p className="font-medium">{profile?.email || 'Not provided'}</p>
-                </div>
-
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50 transition-colors hover:bg-muted/50">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-sm font-medium">Role & Permissions</span>
-                  </div>
-                  <p className="font-medium capitalize">{profile?.role || 'Guest'} Access</p>
-                </div>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="h-4 w-4" />
+                Email Address
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <p className="font-medium">{profile.email || 'Not provided'}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-6">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Activity className="w-4 h-4 mr-2 text-primary" />
-                System Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
-                <div className="h-12 w-12 rounded-full bg-primary/5 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary/60" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">No recent activity</p>
-                  <p className="text-xs text-muted-foreground max-w-[200px]">
-                    Your recent interactions and logins will appear here.
-                  </p>
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Access</CardTitle>
+            <CardDescription>Your current role and application permissions.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Shield className="h-4 w-4" />
+                Role
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <p className="font-medium capitalize">{profile.role}</p>
+            </div>
+
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                Status
+              </div>
+              <p className="font-medium">Signed in</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

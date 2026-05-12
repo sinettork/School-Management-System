@@ -274,16 +274,16 @@ export default function Classes() {
                               <div className="flex gap-1">
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action"
+                                  size="icon-sm"
                                   onClick={() => openEditDialog(cls)}
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="action-destructive"
+                                  size="icon-sm"
                                   onClick={() => openDeleteDialog(cls.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -331,9 +331,9 @@ export default function Classes() {
         title="Delete Class"
         description="Are you sure you want to delete this class? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
+        
         onConfirm={() => deleteId && deleteClassMut.mutate(deleteId)}
-        isDangerous
+        
       />
     </div>
   );

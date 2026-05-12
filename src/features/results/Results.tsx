@@ -39,12 +39,12 @@ type ResultRow = {
     student_code: string | null;
   } | null;
   exam: {
-    title: string | null;
+    name: string | null;
     subject: {
       name: string | null;
     } | null;
-    total_marks: number | null;
   } | null;
+  full_marks: number | null;
 };
 
 export default function Results() {
@@ -69,7 +69,7 @@ export default function Results() {
     queryKey: ["results"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("results")
+        .from("exam_results")
         .select(`
           *,
           student:students(
@@ -77,9 +77,9 @@ export default function Results() {
             student_code
           ),
           exam:exams(
-            title,
+            name,
             subject:subjects(name),
-            total_marks
+            full_marks
           )
         `)
         .order("created_at", { ascending: false });
@@ -111,11 +111,10 @@ export default function Results() {
         .from("exams")
         .select(`
           id,
-          title,
-          subject:subjects(name),
-          total_marks
+          name,
+          subject:subjects(name)
         `)
-        .order("title");
+        .order("name");
       if (error) throw error;
       return data || [];
     }
@@ -124,7 +123,7 @@ export default function Results() {
   const createResultMut = useMutation({
     mutationFn: async (values: ResultFormValues) => {
       const { data, error } = await supabase
-        .from("results")
+        .from("exam_results")
         .insert([values])
         .select()
         .single();
@@ -148,7 +147,7 @@ export default function Results() {
     mutationFn: async (values: ResultFormValues & { id: string }) => {
       const { id, ...updateData } = values;
       const { data, error } = await supabase
-        .from("results")
+        .from("exam_results")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -170,7 +169,7 @@ export default function Results() {
 
   const deleteResultMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("results").delete().eq("id", id);
+      const { error } = await supabase.from("exam_results").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -219,7 +218,7 @@ export default function Results() {
   const filteredResults = results?.filter(result => 
     result.student?.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     result.student?.student_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    result.exam?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    result.exam?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     result.exam?.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const resultPagination = usePaginatedRows(filteredResults);
@@ -303,8 +302,8 @@ export default function Results() {
                               {exams?.map((exam) => (
                                 <SelectItem key={exam.id} value={exam.id}>
                                   <div className="flex flex-col">
-                                    <span className="font-medium">{exam.title}</span>
-                                    <span className="text-sm text-muted-foreground">{exam.subject?.name} ({exam.total_marks} marks)</span>
+                                    <span className="font-medium">{exam.name}</span>
+                                    <span className="text-sm text-muted-foreground">{exam.subject?.name}</span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -409,7 +408,7 @@ export default function Results() {
                     <TableBody>
                       {resultPagination.paginatedRows.length > 0 ? (
                         resultPagination.paginatedRows.map((result) => {
-                          const percentage = getPercentage(result.marks_obtained, result.exam?.total_marks);
+                          const percentage = getPercentage(result.marks_obtained, result.full_marks);
                           const grade = getGrade(percentage);
                           
                           return (
@@ -419,11 +418,11 @@ export default function Results() {
                               </TableCell>
                               <TableCell>
                                 <div>
-                                  <p className="font-medium">{result.exam?.title || "N/A"}</p>
+                                  <p className="font-medium">{result.exam?.name || "N/A"}</p>
                                   <p className="text-sm text-muted-foreground">{result.exam?.subject?.name || ""}</p>
                                 </div>
                               </TableCell>
-                              <TableCell>{result.marks_obtained}/{result.exam?.total_marks || "N/A"}</TableCell>
+                              <TableCell>{result.marks_obtained}/{result.full_marks || "N/A"}</TableCell>
                               <TableCell>{percentage}%</TableCell>
                               <TableCell>
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -438,16 +437,16 @@ export default function Results() {
                                 <div className="flex gap-1">
                                   <Button
                                     type="button"
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="action"
+                                    size="icon-sm"
                                     onClick={() => openEditDialog(result)}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
                                   <Button
                                     type="button"
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="action-destructive"
+                                    size="icon-sm"
                                     onClick={() => openDeleteDialog(result.id)}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -496,9 +495,7 @@ export default function Results() {
         title="Delete Result"
         description="Are you sure you want to delete this result? This action cannot be undone."
         confirmText="Delete"
-        cancelText="Cancel"
         onConfirm={() => deleteId && deleteResultMut.mutate(deleteId)}
-        isDangerous
       />
     </div>
   );
